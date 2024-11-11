@@ -1,0 +1,18 @@
+# ninja log v6
+4	5580	7529981453739948	CMakeFiles/flashcard_app.dir/main.cpp.obj	60bf8aa3b4abf980
+7	5589	7529981788372308	CMakeFiles/flashcard_app.dir/main.cpp.obj	60bf8aa3b4abf980
+5590	8810	7529981844189326	flashcard_app.exe	166805f3d5c21d2e
+9	6093	7529982602458950	CMakeFiles/flashcard_app.dir/main.cpp.obj	60bf8aa3b4abf980
+6094	9430	7529982663302167	flashcard_app.exe	166805f3d5c21d2e
+9	5632	7529983157742500	CMakeFiles/flashcard_app.dir/main.cpp.obj	60bf8aa3b4abf980
+5632	8905	7529983213973255	flashcard_app.exe	166805f3d5c21d2e
+22	5889	7530608592871431	CMakeFiles/flashcard_app.dir/main.cpp.obj	60bf8aa3b4abf980
+5889	9229	7530608651538420	flashcard_app.exe	166805f3d5c21d2e
+7	5743	7530615564646078	CMakeFiles/flashcard_app.dir/main.cpp.obj	60bf8aa3b4abf980
+5743	9174	7530615622003966	flashcard_app.exe	166805f3d5c21d2e
+8	5932	7530618940337962	CMakeFiles/flashcard_app.dir/main.cpp.obj	60bf8aa3b4abf980
+5932	9198	7530618999585355	flashcard_app.exe	166805f3d5c21d2e
+9	5744	7530620068661315	CMakeFiles/flashcard_app.dir/main.cpp.obj	60bf8aa3b4abf980
+5745	9088	7530620126008955	flashcard_app.exe	166805f3d5c21d2e
+9	5712	7530623874988571	CMakeFiles/flashcard_app.dir/main.cpp.obj	60bf8aa3b4abf980
+5712	9102	7530623932013163	flashcard_app.exe	166805f3d5c21d2e
