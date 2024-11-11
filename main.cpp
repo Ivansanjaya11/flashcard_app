@@ -6,11 +6,27 @@ using namespace std;
 using nlohmann::json;
 
 void main_menu(int &option, vector<string> &decks, json data);
-void card_menu(int &option, vector<string> &decks, json data);
+void save_data_to_file();
+
+void deck_menu(int &option, vector<string> &decks, json data);
 void open_deck_folder(int &option, vector<string> &decks, int deck_folder_index);
 void create_new_deck(int &option, vector<string> &decks, json data);
 void rename_a_deck(int &option, vector<string> &decks, json data);
 void delete_a_deck(int &option, vector<string> &decks, json data);
+
+void card_menu(int &option, vector<string> &decks, json data);
+void create_card(int &option, vector<string> &decks, json data);
+void update_card(int &option, vector<string> &decks, json data);
+void delete_card(int &option, vector<string> &decks, json data);
+
+void review_menu();
+void linear_review();
+void random_review();
+
+void quiz_menu();
+void linear_quiz();
+void random_quiz();
+
 void progress_tracking_page();
 
 int main(int argc, char **argv) {
@@ -74,7 +90,7 @@ void main_menu(int &option, vector<string> &decks, json data) {
     }
 }
 
-void card_menu(int &option, vector<string> &decks, json data){
+void deck_menu(int &option, vector<string> &decks, json data){
     do{
         cout << "Choose what you want to do: " << endl;
         cout << "1. Create new deck" << endl;
@@ -107,8 +123,8 @@ void card_menu(int &option, vector<string> &decks, json data){
     }else if(option==7) {
         main_menu(option, decks, data);
     }else {
-        int deck_folder_index = option-7;
-        //open_deck_folder(option, decks, deck_folder_index);
+        option -= 8;
+        card_menu(option, decks, data);
     }
 }
 
@@ -161,7 +177,36 @@ void delete_a_deck(int &option, vector<string> &decks, json data) {
     string name=decks[option-1];
     decks.erase(decks.begin()+option-1);
     data.erase(name);
-    cout << "Successfully added a deck." << endl;
+    cout << "Successfully deleted a deck." << endl;
     cout << "Returning to previous page...." << endl;
     card_menu(option, decks, data);
+}
+
+void card_menu(int &option, vector<string> &decks, json data) {
+    do {
+        cout << "Choose between 1-4" << endl;
+        cout << "1. Create a new card" << endl;
+        cout << "2. Update a card" << endl;
+        cout << "3. Delete a card" << endl;
+        cout << "4. Back" << endl;
+        int numbering=5;
+        for(auto& [key, value] : data[option].items()) {
+            cout << numbering << ". " << key << endl;
+            cout << "\t" << value << endl;
+            numbering++;
+        }
+        cin >> option;
+        if(option<1 || option>4) {
+            cout << "Input not recognized as a valid option." << endl;
+        }
+    }while(option<1 || option>4);
+    if(option==1) {
+
+    }else if(option==2) {
+
+    }else if(option==3) {
+
+    }else if(option==4) {
+        card_menu(option, decks, data);
+    }
 }
