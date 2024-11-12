@@ -14,9 +14,9 @@ void rename_a_deck(int &option, vector<string> &decks, json &data);
 void delete_a_deck(int &option, vector<string> &decks, json &data);
 
 void card_menu(int &option, vector<string> &decks, json &data);
-void create_card(int &option, vector<string> &decks, json &data);
-void update_card(int &option, vector<string> &decks, json &data);
-void delete_card(int &option, vector<string> &decks, json &data);
+void create_card(int &option, vector<string> &decks, json &data, string chosen_deck);
+void update_card(int &option, vector<string> &decks, json &data, string chosen_deck);
+void delete_card(int &option, vector<string> &decks, json &data, string chosen_deck);
 
 void quiz_menu();
 void linear_quiz();
@@ -176,6 +176,7 @@ void delete_a_deck(int &option, vector<string> &decks, json &data) {
 
 void card_menu(int &option, vector<string> &decks, json &data) {
     string chosen_deck = decks[option];
+    int old_option = option;
     do {
         cout << "Choose between 1-4" << endl;
         cout << "1. Create a new card" << endl;
@@ -185,7 +186,7 @@ void card_menu(int &option, vector<string> &decks, json &data) {
         int numbering=5;
         for(auto& [question, answer] : data[chosen_deck].items()) {
             cout << numbering++ << ". Q: " << question << endl;
-            cout << "\tA: " << answer << endl;
+            cout << "   A: " << answer << endl;
         }
         cin >> option;
         if(option<1 || option>4) {
@@ -193,24 +194,89 @@ void card_menu(int &option, vector<string> &decks, json &data) {
         }
     }while(option<1 || option>4);
     if(option==1) {
-        create_card(option, decks, data);
+        option = old_option;
+        create_card(option, decks, data, chosen_deck);
     }else if(option==2) {
-        update_card(option, decks, data);
+        update_card(option, decks, data, chosen_deck);
     }else if(option==3) {
-        delete_card(option, decks, data);
+        delete_card(option, decks, data, chosen_deck);
     }else if(option==4) {
-        card_menu(option, decks, data);
+        deck_menu(option, decks, data);
     }
 }
 
-void create_card(int &option, vector<string> &decks, json &data) {
-
+void create_card(int &option, vector<string> &decks, json &data, string chosen_deck) {
+    string question, answer;
+    cout << "Enter the question of the card: ";
+    getline(cin >> ws, question);
+    cout << "Enter the answer of the card: ";
+    getline(cin >> ws, answer);
+    data[chosen_deck][question] = answer;
+    cout << "Successfully added a deck." << endl;
+    cout << "Returning to previous page...." << endl;
+    card_menu(option, decks, data);
 }
 
-void update_card(int &option, vector<string> &decks, json &data) {
+void update_card(int &option, vector<string> &decks, json &data, string chosen_deck) {
+    if(data[chosen_deck].size()==0) {
+        cout << "This deck has no cards to update. Returning to previous menu..." << endl;
+        deck_menu(option, decks, data);
+    }
+    string arr[data[chosen_deck].size()];
+    do {
+        cout << "Choose a card you want to rename: " << endl;
+        int numbering = 1;
+        for(auto& [question, answer] : data[chosen_deck].items()) {
+            cout << numbering++ << ". Q: " << question << endl;
+            cout << "\tA: " << answer << endl;
+            arr[numbering-1] = question;
+        }
+        cin >> option;
+        if(option<1 || option>data[chosen_deck].size()) {
+            cout << "Input not recognized as a valid option." << endl;
+        }
+    }while(option<1 || option>data[chosen_deck].size());
+    string question, answer;
+    cout << "Enter the new question of the card: ";
+    getline(cin>>ws, question);
+    cout << "Enter the new answer of the card: ";
+    getline(cin >> ws, answer);
 
+    string old_name = arr[option-1];
+
+    data[chosen_deck][question] = answer;
+    data[chosen_deck].erase(arr[option-1]);
+
+    cout << "Successfully updated card '" << old_name << "' to '" << question << "'." << endl;
+    cout << "Returning to previous page...." << endl;
+    deck_menu(option, decks, data);
 }
 
-void delete_card(int &option, vector<string> &decks, json &data) {
+void delete_card(int &option, vector<string> &decks, json &data, string chosen_deck) {
+    if(data[chosen_deck].size()==0) {
+        cout << "This deck has no cards to delete. Returning to previous menu..." << endl;
+        deck_menu(option, decks, data);
+    }
+    string arr[data[chosen_deck].size()];
+    do {
+        cout << "Choose a deck you want to delete: " << endl;
+        int numbering = 1;
+        for(auto& [question, answer] : data[chosen_deck].items()) {
+            cout << numbering++ << ". Q: " << question << endl;
+            cout << "\tA: " << answer << endl;
+            arr[numbering-1] = question;
+        }
+        cin >> option;
+        if(option<1 || option>data[chosen_deck].size()) {
+            cout << "Input not recognized as a valid option." << endl;
+        }
+    }while(option<1 || option>data[chosen_deck].size());
 
+    string name = arr[option-1];
+
+    data[chosen_deck].erase(name);
+
+    cout << "Successfully deleted a card." << endl;
+    cout << "Returning to previous page...." << endl;
+    deck_menu(option, decks, data);
 }
