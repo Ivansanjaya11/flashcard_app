@@ -6,7 +6,7 @@
 using namespace std;
 using nlohmann::json;
 
-enum MenuLevel {MAIN_MENU, DECK_MENU, CARD_MENU};
+enum MenuLevel {MAIN_MENU, DECK_MENU, CARD_MENU, QUIZ_MENU};
 
 void navigate_menu(int &option, vector<string> &decks, json &data, string &chosen_deck, MenuLevel &current_menu);
 
@@ -23,9 +23,8 @@ void create_card(int &option, vector<string> &decks, json &data, string &chosen_
 void update_card(int &option, vector<string> &decks, json &data, string &chosen_deck);
 void delete_card(int &option, vector<string> &decks, json &data, string &chosen_deck);
 
-void quiz_menu();
-void linear_quiz();
-void random_quiz();
+void quiz_menu(int &option, vector<string> &decks, json &data, MenuLevel &current_menu);
+void quiz(int &option, vector<string> &decks, json data, bool random);
 
 void progress_tracking_page();
 
@@ -86,6 +85,9 @@ void navigate_menu(int &option, vector<string> &decks, json &data, string &chose
         case CARD_MENU:
             card_menu(option, decks, data, chosen_deck, current_menu);
             break;
+        case QUIZ_MENU:
+            quiz_menu(option, decks, data, current_menu);
+            break;
     }
 }
 
@@ -103,9 +105,9 @@ void main_menu(int &option, vector<string> &decks, json &data, MenuLevel &curren
     if(option==1) {
         current_menu = DECK_MENU;
     }else if(option==2) {
-        //progress_tracking_page();
+        //progress_tracking_page(); 3
     }else if(option==3) {
-        //save data to json file
+        //SAVE DATA JSON TO FILE 2
         exit(0);
     }
 }
@@ -134,9 +136,10 @@ void deck_menu(int &option, vector<string> &decks, json &data, string &chosen_de
     }else if(option==3) {
         delete_a_deck(option, decks, data);
     }else if(option==4) {
-
+        //QUIZ MODE 1
+        current_menu=QUIZ_MENU;
     }else if(option==5) {
-
+        //export/import 4
     }else if(option==6) {
         current_menu = MAIN_MENU;
     }else {
@@ -298,4 +301,45 @@ void delete_card(int &option, vector<string> &decks, json &data, string &chosen_
 
     cout << "Successfully deleted a card." << endl;
     cout << "Returning to previous page...." << endl;
+}
+
+void quiz_menu(int &option, vector<string> &decks, json &data, MenuLevel &current_menu) {
+    do {
+        cout << "Choose which deck you want to quiz on: " << endl;
+        cout << "1. Back" << endl;
+        for(int i=0;i<decks.size();i++) {
+            cout << i+2 << ". " << decks[i] << endl;
+        }
+        cin >> option;
+        if(option<1 || option>decks.size()+1) {
+            cout << "Input not recognized as a valid option." << endl;
+        }
+    }while(option<1 || option>decks.size()+1);
+    bool is_random=false;
+    int mode_option;
+    if(option!=1) {
+        do {
+            cout << "Choose linear or random mode: " << endl;
+            cout << "1. linear mode" << endl;
+            cout << "2. random mode" << endl;
+            cin >> mode_option;
+            if(mode_option<1 || mode_option>2) {
+                cout << "Input not recognized as a valid option." << endl;
+            }
+        }while(mode_option<1 || mode_option>2);
+    }
+    if(option==1) {
+        current_menu = DECK_MENU;
+    }else {
+        if(mode_option==1) {
+            is_random = false;
+        }else {
+            is_random=true;
+        }
+        quiz(option, decks, data, is_random);
+    }
+}
+
+void quiz(int &option, vector<string> &decks, json data, bool random) {
+
 }
