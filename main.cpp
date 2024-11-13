@@ -13,7 +13,7 @@ enum MenuLevel {MAIN_MENU, DECK_MENU, CARD_MENU, QUIZ_MENU};
 void navigate_menu(int &option, vector<string> &decks, json &data, string &chosen_deck, MenuLevel &current_menu);
 
 void main_menu(int &option, vector<string> &decks, json &data, MenuLevel &current_menu);
-void save_data_to_file();
+void save_data_to_file(json &data);
 
 void deck_menu(int &option, vector<string> &decks, json &data, string &chosen_deck, MenuLevel &current_menu);
 void create_new_deck(int &option, vector<string> &decks, json &data);
@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
     }else {
         cout << "No existing deck data found."<< endl;
         cout << "Creating new file...." << endl;
-        ofstream output_file(json_path + filename + ".json");
+        ofstream output_file(json_path + "/" + filename + ".json");
         if(output_file.is_open()) {
             output_file << data.dump(4);
             cout << "Successfully created new file." << endl;
@@ -93,6 +93,19 @@ void navigate_menu(int &option, vector<string> &decks, json &data, string &chose
     }
 }
 
+void save_data_to_file(json &data) {
+    string json_path = filesystem::current_path().string();
+    string filename = "decks";
+    ofstream file(json_path + "/" + filename + ".json");
+    if(!file.is_open()) {
+        cerr << "Error opening file '" << json_path + filename << ".json'!" << endl;
+        exit(-1);
+    }
+    file << data.dump(4);
+    file.close();
+}
+
+
 void main_menu(int &option, vector<string> &decks, json &data, MenuLevel &current_menu) {
     do{
         cout << "Choose what you want to do: " << endl;
@@ -109,7 +122,9 @@ void main_menu(int &option, vector<string> &decks, json &data, MenuLevel &curren
     }else if(option==2) {
         //progress_tracking_page(); 3
     }else if(option==3) {
-        //SAVE DATA JSON TO FILE 2
+        save_data_to_file(data);
+        cout << "Successfully saved data to file." << endl;
+        cout << "Closing the program...." << endl;
         exit(0);
     }
 }
@@ -138,7 +153,6 @@ void deck_menu(int &option, vector<string> &decks, json &data, string &chosen_de
     }else if(option==3) {
         delete_a_deck(option, decks, data);
     }else if(option==4) {
-        //QUIZ MODE 1
         current_menu=QUIZ_MENU;
     }else if(option==5) {
         //export/import 4
