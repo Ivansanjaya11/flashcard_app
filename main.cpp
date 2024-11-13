@@ -3,6 +3,8 @@
 #include <tabulate.hpp>
 #include <json.hpp>
 #include <filesystem>
+#include <windows.h>
+#include <random>
 using namespace std;
 using nlohmann::json;
 
@@ -341,5 +343,68 @@ void quiz_menu(int &option, vector<string> &decks, json &data, MenuLevel &curren
 }
 
 void quiz(int &option, vector<string> &decks, json data, bool random) {
+    string chosen_deck_name = decks[option-2];
+    if(data[chosen_deck_name].size()==0) {
+        cout << "This deck has no cards to quiz you on. Returning to previous menu..." << endl;
+        return ;
+    }
+    vector<string> temp_questions;
+    for(auto& [question, answer] : data[chosen_deck_name].items()){
+        temp_questions.push_back(question);
+    }
+    if(random) {
+        random_device rd;
+        mt19937 g(rd());
+        shuffle(temp_questions.begin(), temp_questions.end(), g);
+    }
+    int card_left = data[chosen_deck_name].size();
+    int correct_count = 0;
+    for(auto& question : temp_questions){
+        cout << "Q: " << question << endl;
+        cout << "   A: ";
+        string my_answer;
+        getline(cin >> ws, my_answer);
+        string answer = data[chosen_deck_name][question];
+        while(true) {
+            if(GetAsyncKeyState(VK_RETURN) & 0x8000 ) {
+                cout << "The correct answer is: " << answer << endl;
+                break;
+            }
+            Sleep(50);
+        }
+        string is_correct;
+        do {
+            cin.clear();
+            cout << "did you get it right? (y/n)"<<endl;
+            cin >> is_correct;
+            if(is_correct!="y" && is_correct!="n") {
+                cout << "Woah. Let's try again. ";
+            }
+        }while(is_correct!="y" && is_correct!="n");
+        if(is_correct=="y") {
+            correct_count++;
+            cout << "Congratz! You got this one correct." << endl;
+        }else {
+            cout << "Whoops! Try to learn more next time!" << endl;
+        }
+        card_left--;
+        if(card_left==0) {
+            break;
+        }
+    }
+    cout << "You've reached the end of this deck." << endl;
+    double score = (1.0*correct_count/data[chosen_deck_name].size())*100.0;
+    cout << "You got " << correct_count << " out of " << data[chosen_deck_name].size() << " correct!" << endl;
+    cout << "Your score for deck '" << chosen_deck_name << "' is " << score << endl;
+    if(score<75) {
+        cout << "You're not doing well. Learn more!"<<endl;
+    }else if(score <90) {
+        cout << "Hmm... Not bad. Still, Learning more can't hurt." << endl;
+    }else if(score<100) {
+        cout << "You're doing well. Keep it up! And don't forget to learn a bit more." << endl;
+    }else {
+        cout << "Excellent! Perfect score!" << endl;
+    }
+    cout << "Returning to previous page...." << endl;
 
 }
