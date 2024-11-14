@@ -491,9 +491,6 @@ void import_page(json &data) {
 }
 
 void export_page(int &option, json &data) {
-    //handle conflicts/duplicate names
-    // for example, when saving to a file, if that file already exist in that directory, prompt the question:
-    // wanna overwrite it?
     if(data.size()==0) {
         cout << "You have no deck to export!" << endl;
         return ;
@@ -512,6 +509,17 @@ void export_page(int &option, json &data) {
         }
     }while(option<1 || option > numbering);
     string filename = deck_names[option-1]+"_export.json";
+    string filepath = filesystem::current_path().string();
+    filesystem::path path = filepath + "/" + filename;
+    if(filesystem::exists(path)) {
+        char choice;
+        cout << "File already exists in directory. Do you want to overwrite it? (y/n)" << endl;
+        cin >> choice;
+        if (choice != 'y') {
+            cout << "Export canceled." << endl;
+            return;
+        }
+    }
     ofstream exported_file(filename);
     if(exported_file.is_open()) {
         json dump_the_data = {{deck_names[option-1], data[deck_names[option-1]]}};
