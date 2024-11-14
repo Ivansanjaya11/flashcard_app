@@ -5,15 +5,18 @@
 #include <filesystem>
 #include <windows.h>
 #include <random>
+#include <nfd.h>
 using namespace std;
 using nlohmann::json;
 
-enum MenuLevel {MAIN_MENU, DECK_MENU, CARD_MENU, QUIZ_MENU};
+enum MenuLevel {MAIN_MENU, DECK_MENU, CARD_MENU, QUIZ_MENU, IMPORT_EXPORT_MENU};
 
 void navigate_menu(int &option, vector<string> &decks, json &data, string &chosen_deck, MenuLevel &current_menu);
 
 void main_menu(int &option, vector<string> &decks, json &data, MenuLevel &current_menu);
 void save_data_to_file(json &data);
+
+void import_export_menu(int &option, json &data, MenuLevel &current_menu);
 
 void deck_menu(int &option, vector<string> &decks, json &data, string &chosen_deck, MenuLevel &current_menu);
 void create_new_deck(int &option, vector<string> &decks, json &data);
@@ -28,7 +31,11 @@ void delete_card(int &option, vector<string> &decks, json &data, string &chosen_
 void quiz_menu(int &option, vector<string> &decks, json &data, MenuLevel &current_menu);
 void quiz(int &option, vector<string> &decks, json data, bool random);
 
-void progress_tracking_page();
+void progress_tracking_page(json &progress_data, json &data);
+void update_progress(json &progress_data, json &data);
+
+void import_page(json &data);
+void export_page(int &option, json &data);
 
 int main(int argc, char **argv) {
 
@@ -41,8 +48,7 @@ int main(int argc, char **argv) {
     string json_path = filesystem::current_path().string();
     string filename = "decks";
     ifstream input_file(json_path + "/" + filename + ".json");
-    cout << "here: ";
-    cout << json_path << endl;
+    cout << "Opening the json file at: " << json_path << endl;
     if (input_file.is_open()) {
         input_file >> data;
         input_file.close();
@@ -90,6 +96,8 @@ void navigate_menu(int &option, vector<string> &decks, json &data, string &chose
         case QUIZ_MENU:
             quiz_menu(option, decks, data, current_menu);
             break;
+        case IMPORT_EXPORT_MENU:
+            import_export_menu(option, data, current_menu);
     }
 }
 
@@ -120,7 +128,7 @@ void main_menu(int &option, vector<string> &decks, json &data, MenuLevel &curren
     if(option==1) {
         current_menu = DECK_MENU;
     }else if(option==2) {
-        //progress_tracking_page(); 3
+        //progress_tracking_page(progress_data, data);
     }else if(option==3) {
         save_data_to_file(data);
         cout << "Successfully saved data to file." << endl;
@@ -155,7 +163,8 @@ void deck_menu(int &option, vector<string> &decks, json &data, string &chosen_de
     }else if(option==4) {
         current_menu=QUIZ_MENU;
     }else if(option==5) {
-        //export/import 4
+        current_menu=IMPORT_EXPORT_MENU;
+        //EXPORT/IMPORT 3
     }else if(option==6) {
         current_menu = MAIN_MENU;
     }else {
@@ -421,4 +430,81 @@ void quiz(int &option, vector<string> &decks, json data, bool random) {
     }
     cout << "Returning to previous page...." << endl;
 
+}
+
+void import_export_menu(int &option, json &data, MenuLevel &current_menu) {
+    do {
+        cout << "Choose what action you want to do: " << endl;
+        cout << "1. Import a deck" << endl;
+        cout << "2. Export a deck" << endl;
+        cout << "3. Back" << endl;
+        cin >> option;
+        if(option<1 || option>3) {
+            cout << "Input not recognized as a valid option." << endl;
+        }
+    }while(option<1 || option>3);
+    if(option==1) {
+        import_page(data);
+    }else if(option==2) {
+        export_page(option, data);
+    }else {
+        current_menu = DECK_MENU;
+    }
+}
+
+
+void import_page(json &data) {
+    nfdchar_t *outpath = NULL;
+    nfdresult_t result = NFD_OpenDialog("json", NULL, &outpath);
+    if(result==NFD_OKAY) {
+        cout << "file selected: " << outpath << endl;
+        ifstream imported_file(outpath);
+        if(imported_file.is_open()) {
+            json imported_deck;
+            imported_file >> imported_deck;
+            imported_file.close();
+            for(auto& [deck, QA] : imported_deck.items()) {
+                data[deck] = QA;
+            }
+            save_data_to_file(data);
+            cout << "Deck imported successfully." << endl;
+        }else {
+            cerr << "Unable to open file." << endl;
+        }
+        free(outpath);
+    }else if(result == NFD_CANCEL) {
+        cout << "Cancelled file selection." << endl;
+    }else {
+        cerr << "Error: " << NFD_GetError() << endl;
+    }
+}
+
+void export_page(int &option, json &data) {
+    if(data.size()==0) {
+        cout << "You have no deck to export!" << endl;
+        return ;
+    }
+    int numbering = 1;
+    vector<string> deck_names;
+    do {
+        cout << "Choose the deck you want to import: " << endl;
+        for(auto& [deck, QA] : data.items()) {
+            cout << numbering++ << ". " << deck << endl;
+            deck_names.push_back(deck);
+        }
+        cin >> option;
+        if(option<1 || option > numbering) {
+            cout << "Input not recognized as a valid input." << endl;
+        }
+    }while(option<1 || option > numbering);
+    string filename = deck_names[option-1]+"_export.json";
+    ofstream exported_file(filename);
+    if(exported_file.is_open()) {
+        json dump_the_data = {{deck_names[option-1], data[deck_names[option-1]]}};
+        exported_file << dump_the_data.dump(4);
+        exported_file.close();
+        cout << "Deck '" << deck_names[option-1] << "' successfully exported." << endl;
+    }else {
+        cout << "Unable to create exported file." << endl;
+    }
 }
