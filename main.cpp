@@ -452,7 +452,6 @@ void import_export_menu(int &option, json &data, MenuLevel &current_menu) {
     }
 }
 
-
 void import_page(json &data) {
     nfdchar_t *outpath = NULL;
     nfdresult_t result = NFD_OpenDialog("json", NULL, &outpath);
@@ -464,6 +463,16 @@ void import_page(json &data) {
             imported_file >> imported_deck;
             imported_file.close();
             for(auto& [deck, QA] : imported_deck.items()) {
+                if(data.contains(deck)) {
+                    cout << "A deck with the name '" << deck << "' already exists." << endl;
+                    cout << "Do you want to overwrite it? (y/n):" << " ";
+                    char choice;
+                    cin >> choice;
+                    if (choice != 'y') {
+                        cout << "Import canceled." << endl;
+                        return;
+                    }
+                }
                 data[deck] = QA;
             }
             save_data_to_file(data);
@@ -472,6 +481,8 @@ void import_page(json &data) {
             cerr << "Unable to open file." << endl;
         }
         free(outpath);
+        // try using this:
+        // NFD_FreePath(outpath);
     }else if(result == NFD_CANCEL) {
         cout << "Cancelled file selection." << endl;
     }else {
@@ -480,6 +491,9 @@ void import_page(json &data) {
 }
 
 void export_page(int &option, json &data) {
+    //handle conflicts/duplicate names
+    // for example, when saving to a file, if that file already exist in that directory, prompt the question:
+    // wanna overwrite it?
     if(data.size()==0) {
         cout << "You have no deck to export!" << endl;
         return ;
