@@ -32,7 +32,7 @@ void quiz_menu(int &option, vector<string> &decks, json &data, MenuLevel &curren
 void quiz(int &option, vector<string> &decks, json data, bool random);
 
 void progress_tracking_page(json &progress_data, json &data);
-void update_progress(json &progress_data, json &data);
+void update_progress(bool is_review, bool is_after_quiz, bool is_after_question, json &progress_data, json &data);
 
 void import_page(json &data);
 void export_page(int &option, json &data);
@@ -65,6 +65,29 @@ int main(int argc, char **argv) {
             exit(-1);
         }
     }
+
+    json progress_data = {};
+    string progress_json_path = filesystem::current_path().string();
+    string progress_filename = "progress";
+    ifstream progress_input_file(progress_json_path + "/" + progress_filename + ".json");
+    cout << "Opening the progress json file at: " << progress_json_path << endl;
+    if (progress_input_file.is_open()) {
+        progress_input_file >> progress_data;
+        progress_input_file.close();
+        cout << "Successfully loaded progress data" << endl;
+    }else {
+        cout << "No existing progress data found."<< endl;
+        cout << "Creating new file...." << endl;
+        ofstream progress_output_file(progress_json_path + "/" + progress_filename + ".json");
+        if(progress_output_file.is_open()) {
+            progress_output_file << progress_data.dump(4);
+            cout << "Successfully created new file." << endl;
+        }else {
+            cout << "Error creating new file." << endl;
+            exit(-1);
+        }
+    }
+
 
     vector<string> decks;
     for(auto& deck : data.items()) {
@@ -164,7 +187,6 @@ void deck_menu(int &option, vector<string> &decks, json &data, string &chosen_de
         current_menu=QUIZ_MENU;
     }else if(option==5) {
         current_menu=IMPORT_EXPORT_MENU;
-        //EXPORT/IMPORT 3
     }else if(option==6) {
         current_menu = MAIN_MENU;
     }else {
@@ -481,8 +503,6 @@ void import_page(json &data) {
             cerr << "Unable to open file." << endl;
         }
         free(outpath);
-        // try using this:
-        // NFD_FreePath(outpath);
     }else if(result == NFD_CANCEL) {
         cout << "Cancelled file selection." << endl;
     }else {
@@ -529,4 +549,86 @@ void export_page(int &option, json &data) {
     }else {
         cout << "Unable to create exported file." << endl;
     }
+}
+
+void progress_tracking_page(json &progress_data, json &data) {
+    // Progress tracking (how many times a card has been reviewed, if it is mastered,
+    // how many (or percentage) a folder has been mastered, how many successful vs failed answers)
+
+    /*
+     * progress_data:
+     * {
+     *      deck1:{
+     *          "number_reviewed" : int x;
+     *          "is_mastered": [true, int y] or [false, 0];
+     *          "question1": [int number_of_corrects, int number_of_false]
+     *          "question2": [int number_of_corrects, int number_of_false]
+     *          "question3": [int number_of_corrects, int number_of_false]
+     *      }
+     * }
+     *------------------------------
+     * Display structure -> Using tabulate (goal)
+     *                   -> For now, barebone cout to make sure data is correct first
+     *
+     * Most reviewed deck: deck1, number_reviewed times
+     * Most mastered deck: deck1, int y (max of ys)
+     *
+     *
+     * ---------------------------
+     *
+     * Most reviewed deck
+     * -> use number_reviewed
+     * -> check most reviewed deck (find max of number_reviewed in a deck)
+     *
+     * Most mastered deck
+     * -> check if there is at least one is_mastered that is true, then get the max number
+     *
+     * How many times a deck has been reviewed
+     * -> add number_reviewed
+     *
+     * Percentage of mastered deck (if any has gotten 100 in quiz mode)
+     * -> add flag for each deck whether it is mastered (boolean: true for mastered, otherwise false)
+     * -> find total of mastered, divide by total deck number, store as float, multiply by 100, then print
+     *
+     * How many time mastered (how many time got 100 of how many attempts)
+     * - > add as a tuple with is_mastered
+     *
+     * List of mastered and not mastered decks
+     * -> use is_mastered, if true then mastered otherwise not mastered
+     *
+     * For each card, the count of all time correct and false answers for each card
+     * -> rather then answer as the value, the value of key "questions" is a tuple
+     * -> tuple in the form [int number_of_corrects, int number_of_false]
+     *
+     * For each deck, display the best memorized card
+     * -> use correct false tuple
+     * -> re-count the most memorized card (find max for int number_of_corrects in a deck)
+     * -> re-count the least memorized card (find min for int number_of_false in a deck)
+     */
+}
+
+void update_progress(bool is_review, bool is_after_quiz, bool is_after_question, json &progress_data, json &data) {
+    if(is_review==true) {
+        //update_is_review();
+    }else if(is_after_quiz==true) {
+        //update_after_quiz();
+    }else if(is_after_question==true) {
+        //update_is_after_question();
+    }else {
+        cout << "No action done";
+    }
+    // find all possible update actions
+
+    /*
+     * When reviewing a deck
+     * -> increment number_reviewed
+     *
+     * After a quiz session, if it is mastered
+     * -> change the bool flag, increment the counter in flag
+     *
+     * Every time user finish answer a question in quiz
+     * -> if correct, increment the corresponding number_of_corrects by 1
+     * -> if false, increment the corresponding number_of_false by 1
+     *
+     */
 }
