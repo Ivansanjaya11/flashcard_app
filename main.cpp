@@ -628,13 +628,12 @@ void progress_tracking_page(json &progress_data, json &data) {
         .padding_bottom(1)
         .font_align(FontAlign::center)
         .font_style({FontStyle::bold})
-        .font_color(Color::white)
-        .font_background_color(Color::red);
+        .font_color(Color::red)
+        .font_background_color(Color::white);
     for(auto deck : progress_data.items()) {
         if(deck.value().contains("number_reviewed")) {
             int number_reviewed = deck.value()["number_reviewed"];
             reviewed_count_table.add_row({deck.key(), to_string(number_reviewed)});
-            //cout << "\t" << "Deck '" << deck << "' has been reviewed " << deck["number_reviewed"] << " times." << endl;
         }
     }
     cout << reviewed_count_table << endl;
@@ -660,7 +659,13 @@ void progress_tracking_page(json &progress_data, json &data) {
         total_deck++;
     }
     float percentage_of_mastered = ((1.0*mastered_count)/total_deck)*100;
-    mastered_percentage.add_row({to_string(percentage_of_mastered), to_string(100-percentage_of_mastered)});
+    float percentage_of_not_mastered = 100 - percentage_of_mastered;
+    ostringstream out_percent_mastered;
+    out_percent_mastered << fixed << setprecision(2) << percentage_of_mastered;
+    ostringstream out_percent_not_mastered;
+    out_percent_not_mastered << fixed << setprecision(2) << percentage_of_not_mastered;
+
+    mastered_percentage.add_row({out_percent_mastered.str() + "%", out_percent_not_mastered.str() + "%"});
     mastered_percentage[0].format()
         .padding_top(1)
         .padding_bottom(1)
@@ -668,13 +673,14 @@ void progress_tracking_page(json &progress_data, json &data) {
         .font_style({FontStyle::bold});
     mastered_percentage[0][0].format()
         .font_background_color(Color::green)
+        .font_color(Color::red)
         .width(percentage_of_mastered);
     mastered_percentage[0][1].format()
         .font_background_color(Color::red)
+        .font_color(Color::green)
         .width(100-percentage_of_mastered);
     cout << "Chart of percentage of mastered decks: " << endl;
     cout << mastered_percentage << endl;
-    //cout << "You have mastered " << percentage_of_mastered << "% of all decks." << endl;
 
     //how many time every deck is mastered
     Table mastered_count_table;
@@ -690,17 +696,11 @@ void progress_tracking_page(json &progress_data, json &data) {
         .padding_bottom(1)
         .font_align(FontAlign::center)
         .font_style({FontStyle::bold})
-        .font_background_color(Color::red);
+        .font_color(Color::red)
+        .font_background_color(Color::white);
     for(auto &deck : progress_data.items()) {
         if(deck.value().contains("is_mastered")) {
             mastered_count_table.add_row({deck.key(), to_string(deck.value()["is_mastered"])});
-            /*
-            if(deck["is_mastered"]>0) {
-                cout << "\t" << "Deck '" << deck << "' has been aced " << deck["is_mastered"] << " times." << endl;
-            }else {
-                cout << "\t" << "Deck '" << deck << "' has not been mastered." << endl;
-            }
-            */
         }
     }
     cout << mastered_count_table << endl;
@@ -719,7 +719,8 @@ void progress_tracking_page(json &progress_data, json &data) {
         .padding_bottom(1)
         .font_align(FontAlign::center)
         .font_style({FontStyle::bold})
-        .font_background_color(Color::red);
+        .font_color(Color::red)
+        .font_background_color(Color::white);
     for(auto& deck : progress_data.items()) {
         string current_max_question;
         int current_max_card = 0;
@@ -738,30 +739,9 @@ void progress_tracking_page(json &progress_data, json &data) {
             }
         }
         card_table.add_row({deck.key(), current_max_question, current_min_question});
-        //cout << "Your best performing card in deck '" << deck << "' is card '" << current_max_question << "' with " << current_max_card << " times answered correctly" << endl;
-        //cout << "Your worst performing card in deck '" << deck << "' is card '" << current_min_question << "' with " << current_min_card << " times answered correctly" << endl;
     }
     cout << card_table << endl;
 }
-
-    /*
-     * progress_data:
-     * {
-     *      deck1:{
-     *          "number_reviewed" : int x;
-     *          "number_mastered": int y
-     *          "question1": [int number_of_corrects, int number_of_false]
-     *          "question2": [int number_of_corrects, int number_of_false]
-     *          "question3": [int number_of_corrects, int number_of_false]
-     *      }
-     * }
-     *------------------------------
-     * Display structure -> Using tabulate (goal)
-     *                   -> For now, barebone cout to make sure data is correct first
-     *
-     * ---------------------------
-     *
-     */
 
 void update_is_review(json &progress_data, string name) {
     if(progress_data[name].contains("number_reviewed")) {
@@ -778,7 +758,6 @@ void update_after_quiz(json &progress_data, string name) {
     }else {
         progress_data[name]["is_mastered"] = 1;
     }
-
 }
 
 void update_is_after_question(json &progress_data, string name, string question, bool is_correct) {
