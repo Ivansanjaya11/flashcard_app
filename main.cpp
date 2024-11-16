@@ -11,30 +11,33 @@ using nlohmann::json;
 
 enum MenuLevel {MAIN_MENU, DECK_MENU, CARD_MENU, QUIZ_MENU, IMPORT_EXPORT_MENU};
 
-void navigate_menu(int &option, vector<string> &decks, json &data, string &chosen_deck, MenuLevel &current_menu);
+void navigate_menu(int &option, vector<string> &decks, json &progress_data, json &data, string &chosen_deck, MenuLevel &current_menu);
 
-void main_menu(int &option, vector<string> &decks, json &data, MenuLevel &current_menu);
-void save_data_to_file(json &data);
+void main_menu(int &option, vector<string> &decks, json &progress_data, json &data, MenuLevel &current_menu);
+void save_data_to_file(json &progress_data, json &data);
 
-void import_export_menu(int &option, json &data, MenuLevel &current_menu);
+void import_export_menu(int &option, json &progress_data, json &data, MenuLevel &current_menu);
 
 void deck_menu(int &option, vector<string> &decks, json &data, string &chosen_deck, MenuLevel &current_menu);
 void create_new_deck(int &option, vector<string> &decks, json &data);
 void rename_a_deck(int &option, vector<string> &decks, json &data);
 void delete_a_deck(int &option, vector<string> &decks, json &data);
 
-void card_menu(int &option, vector<string> &decks, json &data, string &chosen_deck, MenuLevel &current_menu);
+void card_menu(int &option, vector<string> &decks, json &progress_data, json &data, string &chosen_deck, MenuLevel &current_menu);
 void create_card(int &option, vector<string> &decks, json &data, string &chosen_deck);
 void update_card(int &option, vector<string> &decks, json &data, string &chosen_deck);
 void delete_card(int &option, vector<string> &decks, json &data, string &chosen_deck);
 
-void quiz_menu(int &option, vector<string> &decks, json &data, MenuLevel &current_menu);
-void quiz(int &option, vector<string> &decks, json data, bool random);
+void quiz_menu(int &option, vector<string> &decks, json &progress_data, json &data, MenuLevel &current_menu);
+void quiz(int &option, vector<string> &decks, json &progress_data, json data, bool random);
 
 void progress_tracking_page(json &progress_data, json &data);
-void update_progress(bool is_review, bool is_after_quiz, bool is_after_question, json &progress_data, json &data);
+void update_is_review(json &progress_data, string name);
+void update_after_quiz(json &progress_data, string name);
 
-void import_page(json &data);
+void update_is_after_question(json &progress_data, string name, string question, bool is_correct);
+
+void import_page(json &progress_data, json &data);
 void export_page(int &option, json &data);
 
 int main(int argc, char **argv) {
@@ -66,6 +69,11 @@ int main(int argc, char **argv) {
         }
     }
 
+    vector<string> decks;
+    for(auto& deck : data.items()) {
+        decks.push_back(deck.key());
+    }
+
     json progress_data = {};
     string progress_json_path = filesystem::current_path().string();
     string progress_filename = "progress";
@@ -74,12 +82,42 @@ int main(int argc, char **argv) {
     if (progress_input_file.is_open()) {
         progress_input_file >> progress_data;
         progress_input_file.close();
+        for(int i=0;i<decks.size();i++) {
+            string chosen_deck = decks[i];
+            if(!progress_data.contains(chosen_deck)) {
+                json progress_one_deck;
+                progress_one_deck["number_reviewed"] = 0;
+                progress_one_deck["is_mastered"] = 0;
+                for(auto& [question, answer] : data[chosen_deck].items()) {
+                    progress_one_deck[question] = {0, 0};
+                }
+                progress_data[chosen_deck] = progress_one_deck;
+            }else {
+                if(!progress_data[chosen_deck].contains("number_reviewed")) {
+                    progress_data[chosen_deck]["number_reviewed"] = 0;
+                }
+                if(!progress_data[chosen_deck].contains("is_mastered")) {
+                    progress_data[chosen_deck]["is_mastered"] = 0;
+                }
+                for(auto& [question, answer] : data[chosen_deck].items()) {
+                    if(!progress_data[chosen_deck].contains(question)) {
+                        progress_data[chosen_deck][question] = {0, 0};
+                    }
+                }
+            }
+        }
         cout << "Successfully loaded progress data" << endl;
     }else {
         cout << "No existing progress data found."<< endl;
         cout << "Creating new file...." << endl;
         ofstream progress_output_file(progress_json_path + "/" + progress_filename + ".json");
         if(progress_output_file.is_open()) {
+            for(int i=0;i<decks.size();i++) {
+                json progress_one_deck;
+                progress_one_deck["number_reviewed"] = 0;
+                progress_one_deck["is_mastered"] = 0;
+                progress_data[decks[i]] = progress_one_deck;
+            }
             progress_output_file << progress_data.dump(4);
             cout << "Successfully created new file." << endl;
         }else {
@@ -88,43 +126,37 @@ int main(int argc, char **argv) {
         }
     }
 
-
-    vector<string> decks;
-    for(auto& deck : data.items()) {
-        decks.push_back(deck.key());
-    }
-
     MenuLevel currentMenu = MAIN_MENU;
     string str = "";
     string* chosen_deck = &str;
 
     while (true) {
-        navigate_menu(*option, decks, data, *chosen_deck, currentMenu);
+        navigate_menu(*option, decks, progress_data, data, *chosen_deck, currentMenu);
     }
 
     return 0;
 }
 
-void navigate_menu(int &option, vector<string> &decks, json &data, string &chosen_deck, MenuLevel &current_menu) {
+void navigate_menu(int &option, vector<string> &decks, json &progress_data, json &data, string &chosen_deck, MenuLevel &current_menu) {
     switch(current_menu) {
         case MAIN_MENU:
-            main_menu(option, decks, data, current_menu);
+            main_menu(option, decks, progress_data, data, current_menu);
             break;
         case DECK_MENU:
             deck_menu(option, decks, data, chosen_deck, current_menu);
             break;
         case CARD_MENU:
-            card_menu(option, decks, data, chosen_deck, current_menu);
+            card_menu(option, decks, progress_data, data, chosen_deck, current_menu);
             break;
         case QUIZ_MENU:
-            quiz_menu(option, decks, data, current_menu);
+            quiz_menu(option, decks, progress_data, data, current_menu);
             break;
         case IMPORT_EXPORT_MENU:
-            import_export_menu(option, data, current_menu);
+            import_export_menu(option, progress_data, data, current_menu);
     }
 }
 
-void save_data_to_file(json &data) {
+void save_data_to_file(json &progress_data, json &data) {
     string json_path = filesystem::current_path().string();
     string filename = "decks";
     ofstream file(json_path + "/" + filename + ".json");
@@ -134,10 +166,21 @@ void save_data_to_file(json &data) {
     }
     file << data.dump(4);
     file.close();
+
+
+    string progress_json_path = filesystem::current_path().string();
+    string progress_filename = "progress";
+    ofstream progress_file(progress_json_path + "/" + progress_filename + ".json");
+    if(!progress_file.is_open()) {
+        cerr << "Error opening file '" << progress_json_path + progress_filename << ".json'!" << endl;
+        exit(-1);
+    }
+    progress_file << progress_data.dump(4);
+    progress_file.close();
 }
 
 
-void main_menu(int &option, vector<string> &decks, json &data, MenuLevel &current_menu) {
+void main_menu(int &option, vector<string> &decks, json &progress_data, json &data, MenuLevel &current_menu) {
     do{
         cout << "Choose what you want to do: " << endl;
         cout << "1. Go to decks" << endl;
@@ -151,9 +194,9 @@ void main_menu(int &option, vector<string> &decks, json &data, MenuLevel &curren
     if(option==1) {
         current_menu = DECK_MENU;
     }else if(option==2) {
-        //progress_tracking_page(progress_data, data);
+        progress_tracking_page(progress_data, data);
     }else if(option==3) {
-        save_data_to_file(data);
+        save_data_to_file(progress_data, data);
         cout << "Successfully saved data to file." << endl;
         cout << "Closing the program...." << endl;
         exit(0);
@@ -247,7 +290,8 @@ void delete_a_deck(int &option, vector<string> &decks, json &data) {
     cout << "Returning to previous page...." << endl;
 }
 
-void card_menu(int &option, vector<string> &decks, json &data, string &chosen_deck, MenuLevel &current_menu) {
+void card_menu(int &option, vector<string> &decks, json &progress_data, json &data, string &chosen_deck, MenuLevel &current_menu) {
+    update_is_review(progress_data, chosen_deck);
     do {
         cout << "Choose between 1-4" << endl;
         cout << "1. Create a new card" << endl;
@@ -350,7 +394,7 @@ void delete_card(int &option, vector<string> &decks, json &data, string &chosen_
     cout << "Returning to previous page...." << endl;
 }
 
-void quiz_menu(int &option, vector<string> &decks, json &data, MenuLevel &current_menu) {
+void quiz_menu(int &option, vector<string> &decks, json &progress_data, json &data, MenuLevel &current_menu) {
     do {
         cout << "Choose which deck you want to quiz on: " << endl;
         cout << "1. Back" << endl;
@@ -383,11 +427,11 @@ void quiz_menu(int &option, vector<string> &decks, json &data, MenuLevel &curren
         }else {
             is_random=true;
         }
-        quiz(option, decks, data, is_random);
+        quiz(option, decks, progress_data, data, is_random);
     }
 }
 
-void quiz(int &option, vector<string> &decks, json data, bool random) {
+void quiz(int &option, vector<string> &decks, json &progress_data, json data, bool random) {
     string chosen_deck_name = decks[option-2];
     if(data[chosen_deck_name].size()==0) {
         cout << "This deck has no cards to quiz you on. Returning to previous menu..." << endl;
@@ -429,8 +473,10 @@ void quiz(int &option, vector<string> &decks, json data, bool random) {
         if(is_correct=="y") {
             correct_count++;
             cout << "Congratz! You got this one correct." << endl;
+            update_is_after_question(progress_data, chosen_deck_name, question, true);
         }else {
             cout << "Whoops! Try to learn more next time!" << endl;
+            update_is_after_question(progress_data, chosen_deck_name, question, false);
         }
         card_left--;
         if(card_left==0) {
@@ -448,13 +494,14 @@ void quiz(int &option, vector<string> &decks, json data, bool random) {
     }else if(score<100) {
         cout << "You're doing well. Keep it up! And don't forget to learn a bit more." << endl;
     }else {
+        update_after_quiz(progress_data, chosen_deck_name);
         cout << "Excellent! Perfect score!" << endl;
     }
     cout << "Returning to previous page...." << endl;
 
 }
 
-void import_export_menu(int &option, json &data, MenuLevel &current_menu) {
+void import_export_menu(int &option, json &progress_data, json &data, MenuLevel &current_menu) {
     do {
         cout << "Choose what action you want to do: " << endl;
         cout << "1. Import a deck" << endl;
@@ -466,7 +513,7 @@ void import_export_menu(int &option, json &data, MenuLevel &current_menu) {
         }
     }while(option<1 || option>3);
     if(option==1) {
-        import_page(data);
+        import_page(progress_data, data);
     }else if(option==2) {
         export_page(option, data);
     }else {
@@ -474,7 +521,7 @@ void import_export_menu(int &option, json &data, MenuLevel &current_menu) {
     }
 }
 
-void import_page(json &data) {
+void import_page(json &progress_data, json &data) {
     nfdchar_t *outpath = NULL;
     nfdresult_t result = NFD_OpenDialog("json", NULL, &outpath);
     if(result==NFD_OKAY) {
@@ -497,7 +544,7 @@ void import_page(json &data) {
                 }
                 data[deck] = QA;
             }
-            save_data_to_file(data);
+            save_data_to_file(progress_data, data);
             cout << "Deck imported successfully." << endl;
         }else {
             cerr << "Unable to open file." << endl;
@@ -560,7 +607,7 @@ void progress_tracking_page(json &progress_data, json &data) {
      * {
      *      deck1:{
      *          "number_reviewed" : int x;
-     *          "is_mastered": [true, int y] or [false, 0];
+     *          "number_mastered": int y
      *          "question1": [int number_of_corrects, int number_of_false]
      *          "question2": [int number_of_corrects, int number_of_false]
      *          "question3": [int number_of_corrects, int number_of_false]
@@ -607,16 +654,7 @@ void progress_tracking_page(json &progress_data, json &data) {
      */
 }
 
-void update_progress(bool is_review, bool is_after_quiz, bool is_after_question, json &progress_data, json &data) {
-    if(is_review==true) {
-        //update_is_review();
-    }else if(is_after_quiz==true) {
-        //update_after_quiz();
-    }else if(is_after_question==true) {
-        //update_is_after_question();
-    }else {
-        cout << "No action done";
-    }
+
     // find all possible update actions
 
     /*
@@ -631,4 +669,38 @@ void update_progress(bool is_review, bool is_after_quiz, bool is_after_question,
      * -> if false, increment the corresponding number_of_false by 1
      *
      */
+
+void update_is_review(json &progress_data, string name) {
+    if(progress_data[name].contains("number_reviewed")) {
+        progress_data[name]["number_reviewed"] += 1;
+    }else {
+        progress_data[name]["number_reviewed"] = 1;
+    }
+
+}
+
+void update_after_quiz(json &progress_data, string name) {
+    if(progress_data[name].contains("is_mastered")) {
+        progress_data[name]["is_mastered"] += 1;
+    }else {
+        progress_data[name]["is_mastered"] = 1;
+    }
+
+}
+
+void update_is_after_question(json &progress_data, string name, string question, bool is_correct) {
+    if(is_correct==true) {
+        if(progress_data[name].contains(question)) {
+            progress_data[name][question][0] += 1;
+        }else {
+            progress_data[name][question][0] += 1;
+        }
+    }else {
+        if(progress_data[name].contains(question)) {
+            progress_data[name][question][1] += 1;
+        }else {
+            progress_data[name][question][1] = 1;
+        }
+    }
+
 }
