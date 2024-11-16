@@ -603,13 +603,13 @@ void export_page(int &option, json &data) {
 }
 
 void progress_tracking_page(json &progress_data, json &data) {
-    string current_max;
+    string current_max = "None";
     int current_max_reviewed_count = 0;
     // most reviewed
-    for(auto &deck : progress_data) {
-        if(current_max_reviewed_count < max_of_2_values(deck["number_reviewed"], current_max_reviewed_count)) {
-            current_max_reviewed_count = max_of_2_values(deck["number_reviewed"], current_max_reviewed_count);
-            current_max = deck;
+    for(auto &deck : progress_data.items()) {
+        if(current_max_reviewed_count < max_of_2_values(deck.value()["number_reviewed"], current_max_reviewed_count)) {
+            current_max_reviewed_count = max_of_2_values(deck.value()["number_reviewed"], current_max_reviewed_count);
+            current_max = deck.key();
         }
     }
     cout << "Most reviewed deck: " << current_max << endl;
@@ -617,21 +617,23 @@ void progress_tracking_page(json &progress_data, json &data) {
     // number of reviewed for each deck
     Table reviewed_count_table;
     reviewed_count_table.format()
-        .border_top(" ")
-        .border_bottom(" ")
-        .border_left(" ")
-        .border_right(" ")
+        .border_top("-")
+        .border_bottom("-")
+        .border_left("|")
+        .border_right("|")
         .corner(" ");
+    reviewed_count_table.add_row({"Deck", "Number of times reviewed"});
     reviewed_count_table[0].format()
         .padding_top(1)
         .padding_bottom(1)
         .font_align(FontAlign::center)
         .font_style({FontStyle::bold})
+        .font_color(Color::white)
         .font_background_color(Color::red);
-    reviewed_count_table.add_row({"Deck", "Number of times reviewed"});
-    for(auto &deck : progress_data) {
-        if(deck.contains("number_reviewed")) {
-            reviewed_count_table.add_row({deck, deck["number_reviewed"]});
+    for(auto deck : progress_data.items()) {
+        if(deck.value().contains("number_reviewed")) {
+            int number_reviewed = deck.value()["number_reviewed"];
+            reviewed_count_table.add_row({deck.key(), to_string(number_reviewed)});
             //cout << "\t" << "Deck '" << deck << "' has been reviewed " << deck["number_reviewed"] << " times." << endl;
         }
     }
@@ -639,10 +641,10 @@ void progress_tracking_page(json &progress_data, json &data) {
 
     // most mastered
     int current_max_mastered_count = 0;
-    for(auto &deck : progress_data) {
-        if(current_max_mastered_count < max_of_2_values(deck["number_reviewed"], current_max_mastered_count)) {
-            current_max_mastered_count = max_of_2_values(deck["number_reviewed"], current_max_mastered_count);
-            current_max = deck;
+    for(auto &deck : progress_data.items()) {
+        if(current_max_mastered_count < max_of_2_values(deck.value()["number_reviewed"], current_max_mastered_count)) {
+            current_max_mastered_count = max_of_2_values(deck.value()["number_reviewed"], current_max_mastered_count);
+            current_max = deck.key();
         }
     }
     cout << "Deck with best performance: " << current_max << endl;
@@ -651,23 +653,25 @@ void progress_tracking_page(json &progress_data, json &data) {
     int total_deck = 0;
     //percentage of mastered
     Table mastered_percentage;
-    mastered_percentage[0].format()
-        .padding_top(1)
-        .padding_bottom(1)
-        .font_align(FontAlign::center)
-        .font_style({FontStyle::bold});
-    mastered_percentage[0][0].format()
-        .font_background_color(Color::green);
-    mastered_percentage[0][1].format()
-        .font_background_color(Color::red);
-    for(auto &deck : progress_data) {
-        if(deck.contains("is_mastered") && deck["is_mastered"] > 0) {
+    for(auto &deck : progress_data.items()) {
+        if(deck.value().contains("is_mastered") && deck.value()["is_mastered"] > 0) {
             mastered_count++;
         }
         total_deck++;
     }
     float percentage_of_mastered = ((1.0*mastered_count)/total_deck)*100;
     mastered_percentage.add_row({to_string(percentage_of_mastered), to_string(100-percentage_of_mastered)});
+    mastered_percentage[0].format()
+        .padding_top(1)
+        .padding_bottom(1)
+        .font_align(FontAlign::center)
+        .font_style({FontStyle::bold});
+    mastered_percentage[0][0].format()
+        .font_background_color(Color::green)
+        .width(percentage_of_mastered);
+    mastered_percentage[0][1].format()
+        .font_background_color(Color::red)
+        .width(100-percentage_of_mastered);
     cout << "Chart of percentage of mastered decks: " << endl;
     cout << mastered_percentage << endl;
     //cout << "You have mastered " << percentage_of_mastered << "% of all decks." << endl;
@@ -675,21 +679,21 @@ void progress_tracking_page(json &progress_data, json &data) {
     //how many time every deck is mastered
     Table mastered_count_table;
     mastered_count_table.format()
-        .border_top(" ")
-        .border_bottom(" ")
-        .border_left(" ")
-        .border_right(" ")
+        .border_top("-")
+        .border_bottom("-")
+        .border_left("|")
+        .border_right("|")
         .corner(" ");
+    mastered_count_table.add_row({"Deck", "Number of times mastered"});
     mastered_count_table[0].format()
         .padding_top(1)
         .padding_bottom(1)
         .font_align(FontAlign::center)
         .font_style({FontStyle::bold})
         .font_background_color(Color::red);
-    mastered_count_table.add_row({"Deck", "Number of times mastered"});
-    for(auto &deck : progress_data) {
-        if(deck.contains("is_mastered")) {
-            mastered_count_table.add_row({deck, deck["is_mastered"]});
+    for(auto &deck : progress_data.items()) {
+        if(deck.value().contains("is_mastered")) {
+            mastered_count_table.add_row({deck.key(), to_string(deck.value()["is_mastered"])});
             /*
             if(deck["is_mastered"]>0) {
                 cout << "\t" << "Deck '" << deck << "' has been aced " << deck["is_mastered"] << " times." << endl;
@@ -704,36 +708,36 @@ void progress_tracking_page(json &progress_data, json &data) {
     // best and least performing card
     Table card_table;
     card_table.format()
-        .border_top(" ")
-        .border_bottom(" ")
-        .border_left(" ")
-        .border_right(" ")
+        .border_top("-")
+        .border_bottom("-")
+        .border_left("|")
+        .border_right("|")
         .corner(" ");
+    card_table.add_row({"Deck", "Best performing card", "Worst performing card"});
     card_table[0].format()
         .padding_top(1)
         .padding_bottom(1)
         .font_align(FontAlign::center)
         .font_style({FontStyle::bold})
         .font_background_color(Color::red);
-    card_table.add_row({"Deck", "Best performing card", "Worst performing card"});
-    for(auto& deck : progress_data) {
+    for(auto& deck : progress_data.items()) {
         string current_max_question;
         int current_max_card = 0;
         string current_min_question;
         int current_min_card = 0;
-        for(auto& question : deck) {
-            if(question!="number_reviewed" && question != "number_mastered") {
-                if(current_max_card < max_of_2_values(deck[question], current_max_card)) {
-                    current_max_card = max_of_2_values(deck[question], current_max_card);
-                    current_max_question = question;
+        for(auto& question : deck.value().items()) {
+            if(question.key() != "number_reviewed" && question.key() != "number_mastered") {
+                if(current_max_card < max_of_2_values(question.value()[0], current_max_card)) {
+                    current_max_card = max_of_2_values(question.value()[0], current_max_card);
+                    current_max_question = question.key();
                 }
-                if(current_min_card < min_of_2_values(deck[question], current_min_card)) {
-                    current_max_card = min_of_2_values(deck[question], current_min_card);
-                    current_min_question = question;
+                if(current_min_card < min_of_2_values(question.value()[0], current_min_card)) {
+                    current_max_card = min_of_2_values(question.value()[0], current_min_card);
+                    current_min_question = question.key();
                 }
             }
         }
-        card_table.add_row({deck, current_max_question, current_min_question});
+        card_table.add_row({deck.key(), current_max_question, current_min_question});
         //cout << "Your best performing card in deck '" << deck << "' is card '" << current_max_question << "' with " << current_max_card << " times answered correctly" << endl;
         //cout << "Your worst performing card in deck '" << deck << "' is card '" << current_min_question << "' with " << current_min_card << " times answered correctly" << endl;
     }
