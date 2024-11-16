@@ -724,15 +724,15 @@ void progress_tracking_page(json &progress_data, json &data) {
         string current_max_question;
         int current_max_card = 0;
         string current_min_question;
-        int current_min_card = 0;
+        int current_min_card = numeric_limits<int>::max();
         for(auto& question : deck.value().items()) {
-            if(question.key() != "number_reviewed" && question.key() != "number_mastered") {
+            if(question.key() != "number_reviewed" && question.key() != "is_mastered") {
                 if(current_max_card < max_of_2_values(question.value()[0], current_max_card)) {
                     current_max_card = max_of_2_values(question.value()[0], current_max_card);
                     current_max_question = question.key();
                 }
-                if(current_min_card < min_of_2_values(question.value()[0], current_min_card)) {
-                    current_max_card = min_of_2_values(question.value()[0], current_min_card);
+                if(current_min_card > min_of_2_values(question.value()[0], current_min_card)) {
+                    current_min_card = min_of_2_values(question.value()[0], current_min_card);
                     current_min_question = question.key();
                 }
             }
