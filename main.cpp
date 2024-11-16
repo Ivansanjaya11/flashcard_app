@@ -7,6 +7,7 @@
 #include <random>
 #include <nfd.h>
 using namespace std;
+using namespace tabulate;
 using nlohmann::json;
 
 enum MenuLevel {MAIN_MENU, DECK_MENU, CARD_MENU, QUIZ_MENU, IMPORT_EXPORT_MENU};
@@ -39,6 +40,9 @@ void update_is_after_question(json &progress_data, string name, string question,
 
 void import_page(json &progress_data, json &data);
 void export_page(int &option, json &data);
+
+int max_of_2_values(int a, int b);
+int min_of_2_values(int a, int b);
 
 int main(int argc, char **argv) {
 
@@ -599,8 +603,142 @@ void export_page(int &option, json &data) {
 }
 
 void progress_tracking_page(json &progress_data, json &data) {
-    // Progress tracking (how many times a card has been reviewed, if it is mastered,
-    // how many (or percentage) a folder has been mastered, how many successful vs failed answers)
+    string current_max;
+    int current_max_reviewed_count = 0;
+    // most reviewed
+    for(auto &deck : progress_data) {
+        if(current_max_reviewed_count < max_of_2_values(deck["number_reviewed"], current_max_reviewed_count)) {
+            current_max_reviewed_count = max_of_2_values(deck["number_reviewed"], current_max_reviewed_count);
+            current_max = deck;
+        }
+    }
+    cout << "Most reviewed deck: " << current_max << endl;
+
+    // number of reviewed for each deck
+    Table reviewed_count_table;
+    reviewed_count_table.format()
+        .border_top(" ")
+        .border_bottom(" ")
+        .border_left(" ")
+        .border_right(" ")
+        .corner(" ");
+    reviewed_count_table[0].format()
+        .padding_top(1)
+        .padding_bottom(1)
+        .font_align(FontAlign::center)
+        .font_style({FontStyle::bold})
+        .font_background_color(Color::red);
+    reviewed_count_table.add_row({"Deck", "Number of times reviewed"});
+    for(auto &deck : progress_data) {
+        if(deck.contains("number_reviewed")) {
+            reviewed_count_table.add_row({deck, deck["number_reviewed"]});
+            //cout << "\t" << "Deck '" << deck << "' has been reviewed " << deck["number_reviewed"] << " times." << endl;
+        }
+    }
+    cout << reviewed_count_table << endl;
+
+    // most mastered
+    int current_max_mastered_count = 0;
+    for(auto &deck : progress_data) {
+        if(current_max_mastered_count < max_of_2_values(deck["number_reviewed"], current_max_mastered_count)) {
+            current_max_mastered_count = max_of_2_values(deck["number_reviewed"], current_max_mastered_count);
+            current_max = deck;
+        }
+    }
+    cout << "Deck with best performance: " << current_max << endl;
+
+    int mastered_count = 0;
+    int total_deck = 0;
+    //percentage of mastered
+    Table mastered_percentage;
+    mastered_percentage[0].format()
+        .padding_top(1)
+        .padding_bottom(1)
+        .font_align(FontAlign::center)
+        .font_style({FontStyle::bold});
+    mastered_percentage[0][0].format()
+        .font_background_color(Color::green);
+    mastered_percentage[0][1].format()
+        .font_background_color(Color::red);
+    for(auto &deck : progress_data) {
+        if(deck.contains("is_mastered") && deck["is_mastered"] > 0) {
+            mastered_count++;
+        }
+        total_deck++;
+    }
+    float percentage_of_mastered = ((1.0*mastered_count)/total_deck)*100;
+    mastered_percentage.add_row({to_string(percentage_of_mastered), to_string(100-percentage_of_mastered)});
+    cout << "Chart of percentage of mastered decks: " << endl;
+    cout << mastered_percentage << endl;
+    //cout << "You have mastered " << percentage_of_mastered << "% of all decks." << endl;
+
+    //how many time every deck is mastered
+    Table mastered_count_table;
+    mastered_count_table.format()
+        .border_top(" ")
+        .border_bottom(" ")
+        .border_left(" ")
+        .border_right(" ")
+        .corner(" ");
+    mastered_count_table[0].format()
+        .padding_top(1)
+        .padding_bottom(1)
+        .font_align(FontAlign::center)
+        .font_style({FontStyle::bold})
+        .font_background_color(Color::red);
+    mastered_count_table.add_row({"Deck", "Number of times mastered"});
+    for(auto &deck : progress_data) {
+        if(deck.contains("is_mastered")) {
+            mastered_count_table.add_row({deck, deck["is_mastered"]});
+            /*
+            if(deck["is_mastered"]>0) {
+                cout << "\t" << "Deck '" << deck << "' has been aced " << deck["is_mastered"] << " times." << endl;
+            }else {
+                cout << "\t" << "Deck '" << deck << "' has not been mastered." << endl;
+            }
+            */
+        }
+    }
+    cout << mastered_count_table << endl;
+
+    // best and least performing card
+    Table card_table;
+    card_table.format()
+        .border_top(" ")
+        .border_bottom(" ")
+        .border_left(" ")
+        .border_right(" ")
+        .corner(" ");
+    card_table[0].format()
+        .padding_top(1)
+        .padding_bottom(1)
+        .font_align(FontAlign::center)
+        .font_style({FontStyle::bold})
+        .font_background_color(Color::red);
+    card_table.add_row({"Deck", "Best performing card", "Worst performing card"});
+    for(auto& deck : progress_data) {
+        string current_max_question;
+        int current_max_card = 0;
+        string current_min_question;
+        int current_min_card = 0;
+        for(auto& question : deck) {
+            if(question!="number_reviewed" && question != "number_mastered") {
+                if(current_max_card < max_of_2_values(deck[question], current_max_card)) {
+                    current_max_card = max_of_2_values(deck[question], current_max_card);
+                    current_max_question = question;
+                }
+                if(current_min_card < min_of_2_values(deck[question], current_min_card)) {
+                    current_max_card = min_of_2_values(deck[question], current_min_card);
+                    current_min_question = question;
+                }
+            }
+        }
+        card_table.add_row({deck, current_max_question, current_min_question});
+        //cout << "Your best performing card in deck '" << deck << "' is card '" << current_max_question << "' with " << current_max_card << " times answered correctly" << endl;
+        //cout << "Your worst performing card in deck '" << deck << "' is card '" << current_min_question << "' with " << current_min_card << " times answered correctly" << endl;
+    }
+    cout << card_table << endl;
+}
 
     /*
      * progress_data:
@@ -617,56 +755,7 @@ void progress_tracking_page(json &progress_data, json &data) {
      * Display structure -> Using tabulate (goal)
      *                   -> For now, barebone cout to make sure data is correct first
      *
-     * Most reviewed deck: deck1, number_reviewed times
-     * Most mastered deck: deck1, int y (max of ys)
-     *
-     *
      * ---------------------------
-     *
-     * Most reviewed deck
-     * -> use number_reviewed
-     * -> check most reviewed deck (find max of number_reviewed in a deck)
-     *
-     * Most mastered deck
-     * -> check if there is at least one is_mastered that is true, then get the max number
-     *
-     * How many times a deck has been reviewed
-     * -> add number_reviewed
-     *
-     * Percentage of mastered deck (if any has gotten 100 in quiz mode)
-     * -> add flag for each deck whether it is mastered (boolean: true for mastered, otherwise false)
-     * -> find total of mastered, divide by total deck number, store as float, multiply by 100, then print
-     *
-     * How many time mastered (how many time got 100 of how many attempts)
-     * - > add as a tuple with is_mastered
-     *
-     * List of mastered and not mastered decks
-     * -> use is_mastered, if true then mastered otherwise not mastered
-     *
-     * For each card, the count of all time correct and false answers for each card
-     * -> rather then answer as the value, the value of key "questions" is a tuple
-     * -> tuple in the form [int number_of_corrects, int number_of_false]
-     *
-     * For each deck, display the best memorized card
-     * -> use correct false tuple
-     * -> re-count the most memorized card (find max for int number_of_corrects in a deck)
-     * -> re-count the least memorized card (find min for int number_of_false in a deck)
-     */
-}
-
-
-    // find all possible update actions
-
-    /*
-     * When reviewing a deck
-     * -> increment number_reviewed
-     *
-     * After a quiz session, if it is mastered
-     * -> change the bool flag, increment the counter in flag
-     *
-     * Every time user finish answer a question in quiz
-     * -> if correct, increment the corresponding number_of_corrects by 1
-     * -> if false, increment the corresponding number_of_false by 1
      *
      */
 
@@ -702,5 +791,20 @@ void update_is_after_question(json &progress_data, string name, string question,
             progress_data[name][question][1] = 1;
         }
     }
+}
 
+int max_of_2_values(int a, int b) {
+    if(a>b) {
+        return a;
+    }else {
+        return b;
+    }
+}
+
+int min_of_2_values(int a, int b) {
+    if(a<b) {
+        return a;
+    }else {
+        return b;
+    }
 }
