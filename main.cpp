@@ -6,6 +6,7 @@
 #include <windows.h>
 #include <random>
 #include <nfd.h>
+
 using namespace std;
 using namespace tabulate;
 using nlohmann::json;
@@ -51,6 +52,7 @@ int main(int argc, char **argv) {
     int* option;
     option = &ptr_option;
 
+    // Opens existing json file, otherwise, create new json file for storing decks and cards
     json data = {};
     string json_path = filesystem::current_path().string();
     string filename = "decks";
@@ -73,11 +75,13 @@ int main(int argc, char **argv) {
         }
     }
 
+    // create a vector of deck names to make accessing the names easier
     vector<string> decks;
     for(auto& deck : data.items()) {
         decks.push_back(deck.key());
     }
 
+    // Opens existing progress json file, otherwise create the new json file
     json progress_data = {};
     string progress_json_path = filesystem::current_path().string();
     string progress_filename = "progress";
@@ -86,6 +90,7 @@ int main(int argc, char **argv) {
     if (progress_input_file.is_open()) {
         progress_input_file >> progress_data;
         progress_input_file.close();
+        // for loop body will make sure the progress data is up to date with the content of main json data
         for(int i=0;i<decks.size();i++) {
             string chosen_deck = decks[i];
             if(!progress_data.contains(chosen_deck)) {
@@ -130,10 +135,15 @@ int main(int argc, char **argv) {
         }
     }
 
+    // initialize currentMenu as main menu
     MenuLevel currentMenu = MAIN_MENU;
+
+    // make a chosen_deck pointer variable that points to a string variable
+    // The purpose is to keep track of the chosen deck whenever it changes when passed to different pages
     string str = "";
     string* chosen_deck = &str;
 
+    // call the navigate menu to access other pages, starting with the main menu
     while (true) {
         navigate_menu(*option, decks, progress_data, data, *chosen_deck, currentMenu);
     }
@@ -141,6 +151,7 @@ int main(int argc, char **argv) {
     return 0;
 }
 
+// keeps track of the page being currently accessed
 void navigate_menu(int &option, vector<string> &decks, json &progress_data, json &data, string &chosen_deck, MenuLevel &current_menu) {
     switch(current_menu) {
         case MAIN_MENU:
@@ -160,6 +171,7 @@ void navigate_menu(int &option, vector<string> &decks, json &progress_data, json
     }
 }
 
+// saves to main json file and progress json file
 void save_data_to_file(json &progress_data, json &data) {
     string json_path = filesystem::current_path().string();
     string filename = "decks";
@@ -170,7 +182,6 @@ void save_data_to_file(json &progress_data, json &data) {
     }
     file << data.dump(4);
     file.close();
-
 
     string progress_json_path = filesystem::current_path().string();
     string progress_filename = "progress";
@@ -183,7 +194,7 @@ void save_data_to_file(json &progress_data, json &data) {
     progress_file.close();
 }
 
-
+// the first menu displayed
 void main_menu(int &option, vector<string> &decks, json &progress_data, json &data, MenuLevel &current_menu) {
     do{
         cout << "Choose what you want to do: " << endl;
@@ -207,6 +218,7 @@ void main_menu(int &option, vector<string> &decks, json &progress_data, json &da
     }
 }
 
+// allows CRUD operations on decks, go back to main menu, import/export decks, and access quiz page
 void deck_menu(int &option, vector<string> &decks, json &data, string &chosen_deck, MenuLevel &current_menu){
     do{
         cout << "Choose what you want to do: " << endl;
@@ -243,6 +255,7 @@ void deck_menu(int &option, vector<string> &decks, json &data, string &chosen_de
     }
 }
 
+// creates new deck as a json object
 void create_new_deck(int &option, vector<string> &decks, json &data) {
     string str;
     cout << "Enter the name of the deck:";
@@ -253,6 +266,7 @@ void create_new_deck(int &option, vector<string> &decks, json &data) {
     cout << "Returning to previous page...." << endl;
 }
 
+// renames a deck by creating a new key value pair in the json object and remove the old one
 void rename_a_deck(int &option, vector<string> &decks, json &data) {
     do {
         cout << "Choose a deck you want to rename: " << endl;
@@ -276,6 +290,7 @@ void rename_a_deck(int &option, vector<string> &decks, json &data) {
     cout << "Returning to previous page...." << endl;
 }
 
+// deletes the chosen deck
 void delete_a_deck(int &option, vector<string> &decks, json &data) {
     do {
         cout << "Choose a deck you want to delete: " << endl;
@@ -294,6 +309,7 @@ void delete_a_deck(int &option, vector<string> &decks, json &data) {
     cout << "Returning to previous page...." << endl;
 }
 
+// allows CRUD operations on card and to go back to deck menu
 void card_menu(int &option, vector<string> &decks, json &progress_data, json &data, string &chosen_deck, MenuLevel &current_menu) {
     update_is_review(progress_data, chosen_deck);
     do {
@@ -323,6 +339,7 @@ void card_menu(int &option, vector<string> &decks, json &progress_data, json &da
     }
 }
 
+// creates a new card (by taking 2 inputs for Q and A)
 void create_card(int &option, vector<string> &decks, json &data, string &chosen_deck) {
     string question, answer;
     cout << "Enter the question of the card: ";
@@ -334,6 +351,7 @@ void create_card(int &option, vector<string> &decks, json &data, string &chosen_
     cout << "Returning to previous page...." << endl;
 }
 
+// changes the question and answer of a card by creating a new key-value pair in json object and removes the old one
 void update_card(int &option, vector<string> &decks, json &data, string &chosen_deck) {
     if(data[chosen_deck].size()==0) {
         cout << "This deck has no cards to update. Returning to previous menu..." << endl;
@@ -369,6 +387,7 @@ void update_card(int &option, vector<string> &decks, json &data, string &chosen_
     cout << "Returning to previous page...." << endl;
 }
 
+// deletes the chosen card (removes the key-value pair)
 void delete_card(int &option, vector<string> &decks, json &data, string &chosen_deck) {
     if(data[chosen_deck].size()==0) {
         cout << "This deck has no cards to delete. Returning to previous menu..." << endl;
@@ -398,6 +417,8 @@ void delete_card(int &option, vector<string> &decks, json &data, string &chosen_
     cout << "Returning to previous page...." << endl;
 }
 
+// allows to choose which deck the user wants to do quiz on and to go back to deck menu
+// allows the user to choose linear or random mode
 void quiz_menu(int &option, vector<string> &decks, json &progress_data, json &data, MenuLevel &current_menu) {
     do {
         cout << "Choose which deck you want to quiz on: " << endl;
@@ -435,21 +456,26 @@ void quiz_menu(int &option, vector<string> &decks, json &progress_data, json &da
     }
 }
 
+// mechanism to allow the user to do quiz on a chosen deck
 void quiz(int &option, vector<string> &decks, json &progress_data, json data, bool random) {
     string chosen_deck_name = decks[option-2];
     if(data[chosen_deck_name].size()==0) {
         cout << "This deck has no cards to quiz you on. Returning to previous menu..." << endl;
         return ;
     }
+    // make a vector copy of questions. This allows easier access of question names
+    // Another reason is if the user choose random, it is easier to shuffle randomly a vector data type
     vector<string> temp_questions;
     for(auto& [question, answer] : data[chosen_deck_name].items()){
         temp_questions.push_back(question);
     }
+    // if user choose random,,will shuffle the questions randomly
     if(random) {
         random_device rd;
         mt19937 g(rd());
         shuffle(temp_questions.begin(), temp_questions.end(), g);
     }
+    // keep track of correct amount and the number of cards left on deck that hasn't showed up on the quiz
     int card_left = data[chosen_deck_name].size();
     int correct_count = 0;
     for(auto& question : temp_questions){
@@ -459,6 +485,7 @@ void quiz(int &option, vector<string> &decks, json &progress_data, json data, bo
         getline(cin >> ws, my_answer);
         string answer = data[chosen_deck_name][question];
         while(true) {
+            // wait until user press return key to display correct answer
             if(GetAsyncKeyState(VK_RETURN) & 0x8000 ) {
                 cout << "The correct answer is: " << answer << endl;
                 break;
@@ -482,6 +509,7 @@ void quiz(int &option, vector<string> &decks, json &progress_data, json data, bo
             cout << "Whoops! Try to learn more next time!" << endl;
             update_is_after_question(progress_data, chosen_deck_name, question, false);
         }
+        // decrement the card_left variable until it is 0, in which case, break from the loop
         card_left--;
         if(card_left==0) {
             break;
@@ -745,7 +773,7 @@ void progress_tracking_page(json &progress_data, json &data) {
 
 void update_is_review(json &progress_data, string name) {
     if(progress_data[name].contains("number_reviewed")) {
-        progress_data[name]["number_reviewed"] += 1;
+        progress_data[name]["number_reviewed"] = progress_data[name]["number_reviewed"].get<int>() + 1;
     }else {
         progress_data[name]["number_reviewed"] = 1;
     }
@@ -754,7 +782,7 @@ void update_is_review(json &progress_data, string name) {
 
 void update_after_quiz(json &progress_data, string name) {
     if(progress_data[name].contains("is_mastered")) {
-        progress_data[name]["is_mastered"] += 1;
+        progress_data[name]["is_mastered"]  = progress_data[name]["is_mastered"].get<int>() + 1;
     }else {
         progress_data[name]["is_mastered"] = 1;
     }
@@ -763,13 +791,13 @@ void update_after_quiz(json &progress_data, string name) {
 void update_is_after_question(json &progress_data, string name, string question, bool is_correct) {
     if(is_correct==true) {
         if(progress_data[name].contains(question)) {
-            progress_data[name][question][0] += 1;
+            progress_data[name][question][0] = progress_data[name][question][0].get<int>() + 1;
         }else {
-            progress_data[name][question][0] += 1;
+            progress_data[name][question][0] = 1;
         }
     }else {
         if(progress_data[name].contains(question)) {
-            progress_data[name][question][1] += 1;
+            progress_data[name][question][1] = progress_data[name][question][0].get<int>() + 1;
         }else {
             progress_data[name][question][1] = 1;
         }
