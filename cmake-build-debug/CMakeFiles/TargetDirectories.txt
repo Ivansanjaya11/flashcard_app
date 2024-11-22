@@ -1,3 +1,3 @@
-C:/flashcard_app/cmake-build-debug/CMakeFiles/flashcard_app.dir
-C:/flashcard_app/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/flashcard_app/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+C:/Users/ivans/flashcard_app/cmake-build-debug/CMakeFiles/flashcard_app.dir
+C:/Users/ivans/flashcard_app/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/ivans/flashcard_app/cmake-build-debug/CMakeFiles/rebuild_cache.dir
