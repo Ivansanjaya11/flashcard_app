@@ -92,7 +92,7 @@ flashcard_app_EXTERNAL_OBJECTS =
 
 flashcard_app.exe: CMakeFiles/flashcard_app.dir/main.cpp.obj
 flashcard_app.exe: CMakeFiles/flashcard_app.dir/build.make
-flashcard_app.exe: C:/Program\ Files/JetBrains/CLion\ 2024.1.4/bin/mingw/include/nativefiledialog-master/nativefiledialog-master/cmake-build-debug/libnfd.a
+flashcard_app.exe: C:/Program\ Files/JetBrains/CLion\ 2024.3/bin/mingw/include/nativefiledialog-master/nativefiledialog-master/cmake-build-debug/libnativefiledialog.a
 flashcard_app.exe: CMakeFiles/flashcard_app.dir/linkLibs.rsp
 flashcard_app.exe: CMakeFiles/flashcard_app.dir/objects1.rsp
 flashcard_app.exe: CMakeFiles/flashcard_app.dir/link.txt

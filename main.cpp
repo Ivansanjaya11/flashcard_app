@@ -1,5 +1,5 @@
 #include <iostream>
-#include <CLI11.hpp>
+#include <CLI11/include/CLI/CLI.hpp>
 #include <tabulate.hpp>
 #include <json.hpp>
 #include <filesystem>
@@ -469,14 +469,13 @@ void quiz(int &option, vector<string> &decks, json &progress_data, json data, bo
     for(auto& [question, answer] : data[chosen_deck_name].items()){
         temp_questions.push_back(question);
     }
-    // if user choose random,,will shuffle the questions randomly
+    // if user choose random, will shuffle the questions randomly
     if(random) {
         random_device rd;
         mt19937 g(rd());
         shuffle(temp_questions.begin(), temp_questions.end(), g);
     }
     // keep track of correct amount and the number of cards left on deck that hasn't showed up on the quiz
-    int card_left = data[chosen_deck_name].size();
     int correct_count = 0;
     for(auto& question : temp_questions){
         cout << "Q: " << question << endl;
@@ -509,11 +508,6 @@ void quiz(int &option, vector<string> &decks, json &progress_data, json data, bo
             cout << "Whoops! Try to learn more next time!" << endl;
             update_is_after_question(progress_data, chosen_deck_name, question, false);
         }
-        // decrement the card_left variable until it is 0, in which case, break from the loop
-        card_left--;
-        if(card_left==0) {
-            break;
-        }
     }
     cout << "You've reached the end of this deck." << endl;
     double score = (1.0*correct_count/data[chosen_deck_name].size())*100.0;
@@ -533,6 +527,7 @@ void quiz(int &option, vector<string> &decks, json &progress_data, json data, bo
 
 }
 
+// allows the user to choose between import or export deck, or return to deck menu
 void import_export_menu(int &option, json &progress_data, json &data, MenuLevel &current_menu) {
     do {
         cout << "Choose what action you want to do: " << endl;
@@ -553,6 +548,8 @@ void import_export_menu(int &option, json &progress_data, json &data, MenuLevel 
     }
 }
 
+// allows user to import json file containing deck.
+// uses nfd library to show the file dialog and choose the json file
 void import_page(json &progress_data, json &data) {
     nfdchar_t *outpath = NULL;
     nfdresult_t result = NFD_OpenDialog("json", NULL, &outpath);
@@ -589,6 +586,8 @@ void import_page(json &progress_data, json &data) {
     }
 }
 
+// allows the user to export a specific deck into a json file
+// if already exist, prompt the user if they want to overwrite it
 void export_page(int &option, json &data) {
     if(data.size()==0) {
         cout << "You have no deck to export!" << endl;
@@ -630,6 +629,16 @@ void export_page(int &option, json &data) {
     }
 }
 
+/*
+ * shows th progress of the user
+ * shows:
+ * 1. most reviewed deck
+ * 2. number of times every deck has been reviewed
+ * 3. most mastered deck
+ * 4. Percentage of decks already mastered with respect to the number of decks in the app
+ * 5. number of times every deck has been mastered
+ * 6. Best and worst performing card for each deck
+ */
 void progress_tracking_page(json &progress_data, json &data) {
     string current_max = "None";
     int current_max_reviewed_count = 0;
@@ -710,7 +719,7 @@ void progress_tracking_page(json &progress_data, json &data) {
     cout << "Chart of percentage of mastered decks: " << endl;
     cout << mastered_percentage << endl;
 
-    //how many time every deck is mastered
+    //how many times every deck is mastered
     Table mastered_count_table;
     mastered_count_table.format()
         .border_top("-")
@@ -771,6 +780,7 @@ void progress_tracking_page(json &progress_data, json &data) {
     cout << card_table << endl;
 }
 
+// function to update progress data every time the user reviews any deck
 void update_is_review(json &progress_data, string name) {
     if(progress_data[name].contains("number_reviewed")) {
         progress_data[name]["number_reviewed"] = progress_data[name]["number_reviewed"].get<int>() + 1;
@@ -780,6 +790,7 @@ void update_is_review(json &progress_data, string name) {
 
 }
 
+// function to update progress data every time the user finishes a quiz session
 void update_after_quiz(json &progress_data, string name) {
     if(progress_data[name].contains("is_mastered")) {
         progress_data[name]["is_mastered"]  = progress_data[name]["is_mastered"].get<int>() + 1;
@@ -788,6 +799,7 @@ void update_after_quiz(json &progress_data, string name) {
     }
 }
 
+// function to update progress data every time the user answers a question in a quiz session
 void update_is_after_question(json &progress_data, string name, string question, bool is_correct) {
     if(is_correct==true) {
         if(progress_data[name].contains(question)) {
@@ -804,6 +816,7 @@ void update_is_after_question(json &progress_data, string name, string question,
     }
 }
 
+// function that returns the maximum value between 2 integer numbers
 int max_of_2_values(int a, int b) {
     if(a>b) {
         return a;
@@ -812,6 +825,7 @@ int max_of_2_values(int a, int b) {
     }
 }
 
+// function that returns the minimum value between 2 integer numbers
 int min_of_2_values(int a, int b) {
     if(a<b) {
         return a;

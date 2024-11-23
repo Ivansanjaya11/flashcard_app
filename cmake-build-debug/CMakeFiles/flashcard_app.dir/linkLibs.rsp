@@ -1,1 +1,1 @@
- "C:/Program Files/JetBrains/CLion 2024.1.4/bin/mingw/include/nativefiledialog-master/nativefiledialog-master/cmake-build-debug/libnfd.a" -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 
+ "C:/Program Files/JetBrains/CLion 2024.3/bin/mingw/include/nativefiledialog-master/nativefiledialog-master/cmake-build-debug/libnativefiledialog.a" -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 
