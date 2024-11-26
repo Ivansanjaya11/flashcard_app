@@ -1,0 +1,9 @@
+{
+    "http": {
+        "200": "OK - The request has succeeded.",
+        "301": "Moved Permanently - The resource has been moved to a different URL.",
+        "403": "Forbidden - The client does not have permission to access this resource.",
+        "404": "Not Found - The requested resource could not be found.",
+        "500": "Internal Server Error - The server encountered an unexpected condition."
+    }
+}

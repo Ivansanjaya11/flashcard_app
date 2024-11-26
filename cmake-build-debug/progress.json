@@ -1,26 +1,18 @@
 {
     "hello world": {
-        "hehehe": [
-            1,
-            14
-        ],
-        "hhahah": [
-            3,
-            5
-        ],
         "is_mastered": 3,
         "number_reviewed": 5
     },
-    "htpp": {
-        "200": [
-            2,
-            9
-        ],
-        "404": [
-            1,
-            10
-        ],
-        "is_mastered": 7,
-        "number_reviewed": 12
+    "http": {
+        "is_mastered": 2,
+        "number_reviewed": 9
+    },
+    "math": {
+        "is_mastered": 0,
+        "number_reviewed": 14
+    },
+    "science": {
+        "is_mastered": 1,
+        "number_reviewed": 5
     }
 }
